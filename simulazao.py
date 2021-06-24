@@ -183,6 +183,10 @@ class CallCenter:
         elif len(self.lista_de_llegadas) != 0 and len(self.lista_de_terminos) != 0:
             #HAY LLEGADAS, FALTAN QUE TERMINEN
             return 'comparar'
+
+        elif len(self.lista_de_llegadas) == 0 and len(self.lista_de_terminos) == 0 and len(self.lista_cola) != 0:
+            #Eventos cola
+            return 'retornar_evento_cola'
         ## 0 1
         ## 1 0
         ## 1 1
@@ -206,12 +210,48 @@ class CallCenter:
             #     self.tiempo_actual = self.tiempo_maximo
             #     break
             evento = self.manejo_listas_eventos(string_evento)
-            if len(self.lista_de_llegadas) == 0 and len(self.lista_de_terminos) == 0:
+            if len(self.lista_de_llegadas) == 0 and len(self.lista_de_terminos) == 0: #and len(self.lista_cola) == 0:
                 capstone = 1
         
             
     
     #Actualizar tiempo ??
+
+    def tratamiento_cola(self, evento_lista):
+        var_estado = False
+        # print("Entró a la cola")
+            # evento_lista = self.lista_cola.popleft()
+        for evento_cola in self.lista_cola:
+            hora_salida = floor(evento_cola.hora_partida)
+            fstring=f"Tiempo {hora_salida}" 
+            id_nodo_base = evento_lista.ambulancia.base_asignada.nodo_asociado
+            lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
+            for datos_ruta in lista_rutas_bases:
+                # print(datos_ruta[2],"\n")
+                # print(id_nodo_base)
+                
+                if datos_ruta[2] == id_nodo_base:
+                    # print("Entró a las bases")
+                    if datos_ruta[0] < 2:
+                        # print("Entró AL UMBRAAAAAAAAAL")
+                        evento_cola.ambulancia = evento_lista.ambulancia
+
+                        evento_cola.tiempo_en_cola = self.tiempo_actual - evento_cola.tiempo_llegada
+                        # evento_cola.actualizar_duracion_total()
+                        self.tiempo_actual = evento_cola.tiempo_llegada + evento_cola.tiempo_en_cola  #+ evento_cola.duracion_total
+                        evento_cola.tiempo_llegada = self.tiempo_actual
+                        # tiene_ambulancia = self.cargar_evento_llegada(evento_cola)
+                        # if tiene_ambulancia == True:
+                        self.lista_de_terminos.append(evento_cola)
+                        var_estado = True
+                        break
+            if var_estado == True:
+                break
+        if var_estado == True:
+            
+            self.lista_cola.remove(evento_cola)
+
+
 
     def manejo_listas_eventos(self, string_evento):
         
@@ -223,7 +263,7 @@ class CallCenter:
                 self.lista_eventos_manejados.append(evento_lista)
                 evento_lista.ambulancia.disponible = True
 
-                print(f"Tiempo Actual Evento Término: {self.tiempo_actual}")
+                # print(f"Tiempo Actual Evento Término: {self.tiempo_actual}")
                 print("Lista Llegadas",len(self.lista_de_llegadas))
                 print("Lista Términos",len(self.lista_de_terminos))
                 print("Lista Colas",len(self.lista_cola))
@@ -231,27 +271,49 @@ class CallCenter:
                 # print(f"El evento terminó, Tiempo Actual {self.tiempo_actual}")
 
                 if len(self.lista_cola) != 0:
-                        # evento_lista = self.lista_cola.popleft()
-                        for evento_cola in self.lista_cola:
-                            hora_salida = floor(evento_cola.hora_partida)
-                            fstring=f"Tiempo {hora_salida}" 
-                            id_nodo_base = evento_lista.ambulancia.base_asignada.id
-                            lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
-                            for datos_ruta in lista_rutas_bases:
-                                if datos_ruta[2] == id_nodo_base:
-                                    if datos_ruta[0] < 2:
-
-                                        evento_cola.tiempo_en_cola = self.tiempo_actual - evento_cola.tiempo_llegada
-                                        # evento_cola.actualizar_duracion_total()
-                                        self.tiempo_actual = evento_cola.tiempo_llegada + evento_cola.tiempo_en_cola  #+ evento_cola.duracion_total
-                                        evento_cola.tiempo_llegada = self.tiempo_actual
-                                        # tiene_ambulancia = self.cargar_evento_llegada(evento_cola)
-                                        # if tiene_ambulancia == True:
-                                        self.lista_de_terminos.append(evento_cola)
-                                        self.lista_cola.remove(evento_cola)
-                                        break
+                        self.tratamiento_cola(evento_lista)
 
                 # return algo
+
+        # elif string_evento == "retornar_evento_cola":
+            
+        #     if len(self.lista_cola) != 0:
+        #                 var_estado = False
+        #                 # print("Entró a la cola")
+        #                 evento_cola = self.lista_cola.popleft()
+        #                 hora_salida = floor(evento_cola.hora_partida)
+        #                 fstring=f"Tiempo {hora_salida}" 
+        #                 id_nodo_base = evento_cola.ambulancia.base_asignada.nodo_asociado
+        #                 lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
+
+        #                 # for evento_cola in self.lista_cola:
+        #                 #     hora_salida = floor(evento_cola.hora_partida)
+        #                 #     fstring=f"Tiempo {hora_salida}" 
+        #                 #     id_nodo_base = evento_lista.ambulancia.base_asignada.nodo_asociado
+        #                 #     lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
+        #                 for datos_ruta in lista_rutas_bases:
+        #                     # print(datos_ruta[2],"\n")
+        #                     # print(id_nodo_base)
+                            
+        #                     if datos_ruta[2] == id_nodo_base:
+        #                         # print("Entró a las bases")
+        #                         if datos_ruta[0] < 2:
+        #                             # print("Entró AL UMBRAAAAAAAAAL")
+        #                             evento_cola.ambulancia = evento_lista.ambulancia
+
+        #                             evento_cola.tiempo_en_cola = self.tiempo_actual - evento_cola.tiempo_llegada
+        #                             # evento_cola.actualizar_duracion_total()
+        #                             self.tiempo_actual = evento_cola.tiempo_llegada + evento_cola.tiempo_en_cola  #+ evento_cola.duracion_total
+        #                             evento_cola.tiempo_llegada = self.tiempo_actual
+        #                             # tiene_ambulancia = self.cargar_evento_llegada(evento_cola)
+        #                             # if tiene_ambulancia == True:
+        #                             self.lista_de_terminos.append(evento_cola)
+        #                             var_estado = True
+        #                             break
+        #                 if var_estado == True:
+        #                     break
+        #             if var_estado == True:
+        #                 self.lista_cola.remove(evento_cola)
 
         elif string_evento == "retornar_evento_llegada":      ##Termino cuando la ambulancia llega a la base
                 # print(string_evento)
@@ -262,7 +324,7 @@ class CallCenter:
                 if tiene_ambulancia == True:
                     self.lista_de_terminos.append(evento_lista)
                 
-                print(f"Tiempo Actual Evento Llegada {self.tiempo_actual}")
+                # print(f"Tiempo Actual Evento Llegada {self.tiempo_actual}")
                 print("Lista Llegadas",len(self.lista_de_llegadas))
                 print("Lista Términos",len(self.lista_de_terminos))
                 print("Lista Colas",len(self.lista_cola))
@@ -295,7 +357,7 @@ class CallCenter:
                     tiene_ambulancia = self.cargar_evento_llegada(evento_lista)
                     if tiene_ambulancia == True:
                         self.lista_de_terminos.append(evento_lista)
-                    print(f"Tiempo Actual Comparacion: Llegada primero {self.tiempo_actual}")
+                    # print(f"Tiempo Actual Comparacion: Llegada primero {self.tiempo_actual}")
                     print("Lista Llegadas",len(self.lista_de_llegadas))
                     print("Lista Términos",len(self.lista_de_terminos))
                     print("Lista Colas",len(self.lista_cola))
@@ -315,7 +377,7 @@ class CallCenter:
                     self.lista_eventos_manejados.append(evento_lista)
                     self.tiempo_actual = evento_lista.tiempo_llegada + evento_lista.duracion_total
 
-                    print(f"Tiempo Actual Comparacion: Término primero: {self.tiempo_actual}")
+                    # print(f"Tiempo Actual Comparacion: Término primero: {self.tiempo_actual}")
                     print("Lista Llegadas",len(self.lista_de_llegadas))
                     print("Lista Términos",len(self.lista_de_terminos))
                     print("Lista Colas",len(self.lista_cola))
@@ -323,26 +385,8 @@ class CallCenter:
                     #print(f"LARGO DE COLAAAAAAAA: {len(self.lista_cola)}")
 
                     if len(self.lista_cola) != 0:
-                        # evento_lista = self.lista_cola.popleft()
-                        for evento_cola in self.lista_cola:
-                            hora_salida = floor(evento_cola.hora_partida)
-                            fstring=f"Tiempo {hora_salida}" 
-                            id_nodo_base = evento_lista.ambulancia.base_asignada.id
-                            lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
-                            for datos_ruta in lista_rutas_bases:
-                                if datos_ruta[2] == id_nodo_base:
-                                    if datos_ruta[0] < 0.5:
-
-                                        evento_cola.tiempo_en_cola = self.tiempo_actual - evento_cola.tiempo_llegada
-                                        # evento_cola.actualizar_duracion_total()
-                                        self.tiempo_actual = evento_cola.tiempo_llegada + evento_cola.tiempo_en_cola  #+ evento_cola.duracion_total
-                                        evento_cola.tiempo_llegada = self.tiempo_actual
-                                        # tiene_ambulancia = self.cargar_evento_llegada(evento_cola)
-                                        # if tiene_ambulancia == True:
-                                        self.lista_de_terminos.append(evento_cola)
-                                        self.lista_cola.remove(evento_cola)
-                                        break
-                    
+                        self.tratamiento_cola(evento_lista)
+                                
                     #trabajar cola
                     return  evento_lista
 
@@ -387,7 +431,7 @@ class CallCenter:
                                 pass
 
                             else:
-                                print("ALGO CON MAYÚSCULA HARTO HARTO HARTO \n \n ")
+                                # print("ALGO CON MAYÚSCULA HARTO HARTO HARTO \n \n ")
                                 hay_ambulancia = 1
                                 ambulancia_elegida = ambulancia
                                 #no_disponible
@@ -442,11 +486,11 @@ class CallCenter:
                     evento.viaje_llamado = tiempo_base_evento
                     evento.viaje_hospital = tiempo_evento_centro
                     evento.viaje_base = tiempo_centro_base
-                    print(f"Tiempo que va al evento {evento.viaje_llamado}\nTiempo que va al Centro { evento.viaje_hospital}\nTiempo que va a la Base {evento.viaje_base} \
-                        \nTiempo Preparacion {evento.preparacion},\nTiempo Atencion {evento.atencion},\nTiempo Derivacion {evento.derivacion},\nTiempo Llegada {evento.tiempo_llegada},\nTiempo cola {evento.tiempo_en_cola} ")
+                    # print(f"Tiempo que va al evento {evento.viaje_llamado}\nTiempo que va al Centro { evento.viaje_hospital}\nTiempo que va a la Base {evento.viaje_base} \
+                    #     \nTiempo Preparacion {evento.preparacion},\nTiempo Atencion {evento.atencion},\nTiempo Derivacion {evento.derivacion},\nTiempo Llegada {evento.tiempo_llegada},\nTiempo cola {evento.tiempo_en_cola} ")
                         
-                    print("Tiempo de Respuesta : ",evento.preparacion + evento.viaje_llamado )
-                    self.lista_de_tiempos_respuesta.append(evento.preparacion + evento.viaje_llamado)
+                    # print("Tiempo de Respuesta : ",evento.preparacion + evento.viaje_llamado )
+                    # self.lista_de_tiempos_respuesta.append(evento.preparacion + evento.viaje_llamado)
 
                     evento.actualizar_duracion_total()
                     evento.duracion_total = evento.duracion_total - evento.tiempo_en_cola 
@@ -689,9 +733,19 @@ call_center = CallCenter()
 call_center.run()
 print("Lista duraciones",call_center.lista_de_duraciones)
 print(len(call_center.lista_de_duraciones))
+
+for evento_cola in call_center.lista_cola:
+    hora_salida = floor(evento_cola.hora_partida)
+    fstring=f"Tiempo {hora_salida}" 
+    # id_nodo_base = evento_cola.ambulancia.base_asignada.nodo_asociado
+    lista_rutas_bases =  call_center.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
+    print(lista_rutas_bases[0], lista_rutas_bases[1])
+
+
+
 # plt.plot(call_center.lista_de_duraciones)
-plt.plot(call_center.lista_de_tiempos_respuesta)
-plt.show()
+# plt.plot(call_center.lista_de_tiempos_respuesta)
+# plt.show()
 # print("LLEGADAS", call_center.lista_de_llegadas)
 # print("\n")
 # print("LARGO LLegadas", len(call_center.lista_de_llegadas))
