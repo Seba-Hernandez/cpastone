@@ -4,6 +4,8 @@ from random import expovariate, randint, uniform, seed
 from datetime import datetime, timedelta
 import time
 from math import sqrt, floor
+from datetime import datetime
+from datetime import timedelta
 
 from numpy import printoptions
 from carga_datos import cargar_bases, cargar_centros, cargar_eventos, cargar_nodos
@@ -16,8 +18,64 @@ import matplotlib.pyplot as plt
 def segundo_elemento(elem):
     return elem.duracion_total + elem.tiempo_llegada
 
+PARAMETRO_UMBRAL = 1
+
+def manejo_tiempo(fecha):
+    datemask = '%H:%M:%S'
+    objeto = datetime.strptime(fecha, datemask)
+    
+    return objeto
 
 
+class Eventos:
+    _id = 0
+    def __init__(self, tiempo_inicio, posicion_x, posicion_y, preparacion, atencion, derivacion):
+        self._id += 1
+        self.posicion_x = posicion_x
+        self.posicion_y = posicion_y
+        #self.bases = self.asignar_base()
+        self.preparacion = preparacion / 60 #DESDE QUE LLAMAN HASTA QUE LA AMBULANCIA SALE
+        self.viaje_llamado = 0  #CUANTO ME DEMORO EN LLEGAR AL ACCIDENTE
+        self.atencion = atencion / 60     #DESDE QUE LLEGA HASTA EL LLAMADO, HASTA QUE PARTE AL CENTRO
+        self.viaje_hospital = 0 #CUANTO ME DEMORO EN LLEGAR AL HOSPITAL
+        self.derivacion = derivacion / 60  #DESDE QUE LLEGA AL HOSPITAL, HASTA QUE PARTE A LA BASE
+        self.viaje_base = 0    #CUANTO ME DEMORO EN RETORNAR A LA BASE
+        self.tiempo_llegada = tiempo_inicio
+        # self.tiempo_termino = None
+        self.tiempo_en_cola = 0
+        self.duracion_total = self.tiempo_en_cola + self.preparacion + self.viaje_llamado + self.atencion +  self.viaje_hospital + self.derivacion \
+            + self.viaje_base
+        self.nodo_asociado = None
+        self.hora_partida = self.tiempo_llegada + self.preparacion
+        #self.hora_evento = floor(tiempo_inicio)
+        self.ambulancia = None  
+
+    def actualizar_duracion_total(self):
+        self.duracion_total = self.tiempo_en_cola + self.preparacion + self.viaje_llamado + self.atencion +  self.viaje_hospital + self.derivacion \
+            + self.viaje_base
+    #SUMAR TIEMPOS
+    
+    def obtener_viaje_llamado(self): #DE LAS 20 RUTAS MÍNIMAS, ME QUEDO CON LA QUE ESTÁ MÁS CERCANA Y TIENE AMBULANCIA DISP
+        pass
+    def obtener_viaje_hospital(self):
+        pass
+    def obtener_viaje_base(self):
+        pass
+
+
+    def generar_tiempo_termino (self):
+        tiempo = self.preparacion + self.viaje_llamado + self.atencion + self.viaje_hospital + self.derivacion + self.viaje_base
+        return(tiempo)
+
+    #ASIGNAR UNA BASE
+
+    def asignar_base(self):
+        lista_bases_que_cubren = []
+         #cargar las bases que cubren el evento
+
+         #INSTANCIAR BASES?
+
+        return(lista_bases_que_cubren)
 
 class Ambulancia:
     def __init__(self,id):
@@ -86,6 +144,9 @@ class CallCenter:
         self.lista_eventos_manejados = []
         self.lista_cola = deque([])
         self.grafo = None
+
+        self.contador_ambulancia = 0
+
         # usamos datetime para manejar temporalidad
         tiempo = 0
 
@@ -217,22 +278,24 @@ class CallCenter:
     
     #Actualizar tiempo ??
 
-    def tratamiento_cola(self, evento_lista):
+    def tratamiento_cola(self, evento_lista): #RECIBE EVENTO DE TÉRMINO
         var_estado = False
         # print("Entró a la cola")
             # evento_lista = self.lista_cola.popleft()
+        
         for evento_cola in self.lista_cola:
             hora_salida = floor(evento_cola.hora_partida)
             fstring=f"Tiempo {hora_salida}" 
             id_nodo_base = evento_lista.ambulancia.base_asignada.nodo_asociado
-            lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
-            for datos_ruta in lista_rutas_bases:
+            lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)] 
+            contador = 0
+            for datos_ruta in lista_rutas_bases: #TIEMPO-RUTA-ID_BASE
                 # print(datos_ruta[2],"\n")
                 # print(id_nodo_base)
-                
                 if datos_ruta[2] == id_nodo_base:
                     # print("Entró a las bases")
-                    if datos_ruta[0] < 2:
+                    if datos_ruta[0] < PARAMETRO_UMBRAL:
+                        tiempo_base_evento = datos_ruta[0]
                         # print("Entró AL UMBRAAAAAAAAAL")
                         evento_cola.ambulancia = evento_lista.ambulancia
 
@@ -242,6 +305,51 @@ class CallCenter:
                         evento_cola.tiempo_llegada = self.tiempo_actual
                         # tiene_ambulancia = self.cargar_evento_llegada(evento_cola)
                         # if tiene_ambulancia == True:
+
+                        #MANEJO TIEMPO BASE A EVENTO
+
+                        hora_salida_centro = floor(evento_cola.tiempo_llegada + tiempo_base_evento + evento_cola.atencion) # Tiempo para poner al diccionario como KEy
+                        hora_salida_centro_2 = evento_cola.tiempo_llegada + tiempo_base_evento + evento_cola.atencion #Tiempo que se suma 
+
+                        fstring=f"Tiempo {hora_salida_centro}"
+                        if hora_salida_centro >= 24:
+                            fstring = f"Tiempo {23}" 
+                        ruta_evento_centro =  self.dicc_eventos_centros[fstring][str(evento_cola.nodo_asociado)]
+                        id_centro = ruta_evento_centro[2]
+                        tiempo_evento_centro = ruta_evento_centro[0]
+
+                        hora_salida_base = floor(hora_salida_centro_2 + tiempo_evento_centro + evento_cola.derivacion)
+                        fstring2 = f"Tiempo {hora_salida_base}"  #hora_salida_base
+
+                        id_nodo_base_retornar = evento_cola.ambulancia.base_asignada.nodo_asociado
+                        print(id_nodo_base_retornar,type(id_nodo_base_retornar))
+
+                        if hora_salida_base >= 24:
+                            fstring2 = f"Tiempo {23}" 
+                        lista_centros_bases = self.dicc_centros_bases[fstring2][str(id_centro)]  #Lista desde centro a lista de bases (primero debiese ser la que le pertenece y no las más cercana)
+                        # print(evento._id, "EVENTO IDD")
+
+                        for base in lista_centros_bases:         #Base[0]: Tiempo de la ruta
+                            if base[2] == id_nodo_base_retornar: #Base[2]: base asociada a ruta centro - base
+                                tiempo_centro_base = base[0]     #Base[1]: lista con los id de la ruta      
+                                hora_salida_final = hora_salida_centro_2 + tiempo_evento_centro + evento_cola.derivacion
+                                evento_cola.viaje_llamado = tiempo_base_evento
+                                evento_cola.viaje_hospital = tiempo_evento_centro
+                                evento_cola.viaje_base = tiempo_centro_base
+                                # print(f"Tiempo que va al evento {evento.viaje_llamado}\nTiempo que va al Centro { evento.viaje_hospital}\nTiempo que va a la Base {evento.viaje_base} \
+                                #     \nTiempo Preparacion {evento.preparacion},\nTiempo Atencion {evento.atencion},\nTiempo Derivacion {evento.derivacion},\nTiempo Llegada {evento.tiempo_llegada},\nTiempo cola {evento.tiempo_en_cola} ")
+                                    
+                                # print("Tiempo de Respuesta : ",evento.preparacion + evento.viaje_llamado )
+                                self.lista_de_tiempos_respuesta.append(evento_cola.preparacion + evento_cola.viaje_llamado)
+
+                                evento_cola.actualizar_duracion_total()
+                                evento_cola.duracion_total = evento_cola.duracion_total - evento_cola.tiempo_en_cola 
+                                print("Duracion TOtal: ",evento_cola.duracion_total )
+                                self.lista_de_duraciones.append(evento_cola.duracion_total)
+                                break
+
+
+
                         self.lista_de_terminos.append(evento_cola)
                         var_estado = True
                         break
@@ -251,6 +359,9 @@ class CallCenter:
             
             self.lista_cola.remove(evento_cola)
 
+        elif var_estado == False:
+            self.contador_ambulancia += 1
+            print("LA VARIEBLE DE ESTADO ES FALSSE")
 
 
     def manejo_listas_eventos(self, string_evento):
@@ -263,7 +374,7 @@ class CallCenter:
                 self.lista_eventos_manejados.append(evento_lista)
                 evento_lista.ambulancia.disponible = True
 
-                # print(f"Tiempo Actual Evento Término: {self.tiempo_actual}")
+                print(f"Tiempo Actual Evento Término: {self.tiempo_actual}")
                 print("Lista Llegadas",len(self.lista_de_llegadas))
                 print("Lista Términos",len(self.lista_de_terminos))
                 print("Lista Colas",len(self.lista_cola))
@@ -324,7 +435,7 @@ class CallCenter:
                 if tiene_ambulancia == True:
                     self.lista_de_terminos.append(evento_lista)
                 
-                # print(f"Tiempo Actual Evento Llegada {self.tiempo_actual}")
+                print(f"Tiempo Actual Evento Llegada {self.tiempo_actual}")
                 print("Lista Llegadas",len(self.lista_de_llegadas))
                 print("Lista Términos",len(self.lista_de_terminos))
                 print("Lista Colas",len(self.lista_cola))
@@ -357,7 +468,7 @@ class CallCenter:
                     tiene_ambulancia = self.cargar_evento_llegada(evento_lista)
                     if tiene_ambulancia == True:
                         self.lista_de_terminos.append(evento_lista)
-                    # print(f"Tiempo Actual Comparacion: Llegada primero {self.tiempo_actual}")
+                    print(f"Tiempo Actual Comparacion: Llegada primero {self.tiempo_actual}")
                     print("Lista Llegadas",len(self.lista_de_llegadas))
                     print("Lista Términos",len(self.lista_de_terminos))
                     print("Lista Colas",len(self.lista_cola))
@@ -377,7 +488,7 @@ class CallCenter:
                     self.lista_eventos_manejados.append(evento_lista)
                     self.tiempo_actual = evento_lista.tiempo_llegada + evento_lista.duracion_total
 
-                    # print(f"Tiempo Actual Comparacion: Término primero: {self.tiempo_actual}")
+                    print(f"Tiempo Actual Comparacion: Término primero: {self.tiempo_actual}")
                     print("Lista Llegadas",len(self.lista_de_llegadas))
                     print("Lista Términos",len(self.lista_de_terminos))
                     print("Lista Colas",len(self.lista_cola))
@@ -403,7 +514,7 @@ class CallCenter:
         #print("\r\r\033[91m[LLEGADA]\033[0m ha llegado un auto id: {} {}".format(auto._id,self.tiempo_actual))
 
     def cargar_evento_llegada(self, evento):
-        hay_ambulancia = 0
+        hay_ambulancia = 0 #NO hay ambulancia
         id_nodo_evento = evento.nodo_asociado   #DETERMINAR TIEMPOS QUE NO TENEMOS
         hora_salida = floor(evento.hora_partida)
         fstring=f"Tiempo {hora_salida}" 
@@ -412,52 +523,59 @@ class CallCenter:
 
         lista_rutas_bases =  self.dicc_base_eventos[fstring][str(id_nodo_evento)]
         contador = 0
+        #REVISIÓN DE BASES PARA VER AMBULANCIAS DISPONIBLES
+        contador_bases = 0
         for lista in lista_rutas_bases:
-            id_base = lista[2]
-            for objeto_base in self.lista_bases_creadas:
-                if (objeto_base.nodo_asociado == id_base) and (objeto_base.activada == True) and hay_ambulancia != 1:
-                    #distancia es mayor A: umbral
+            if contador_bases <= 3:
+                id_base = lista[2]  #Base más cercana 
+                
+                for objeto_base in self.lista_bases_creadas:
+                    if (objeto_base.nodo_asociado == id_base) and (objeto_base.activada == True) and hay_ambulancia != 1:
+                        #distancia es mayor A: umbral
 
-                    for ambulancia in objeto_base.lista_ambulancias_base :
+                        for ambulancia in objeto_base.lista_ambulancias_base :
 
-                        #print(ambulancia.disponible)
-                        if ambulancia.disponible == True and hay_ambulancia != 1:
-                            
+                            #print(ambulancia.disponible)
+                            if ambulancia.disponible == True and hay_ambulancia != 1:
+                                
+                                info_ruta = lista_rutas_bases[contador]
+                                tiempo_base_evento = info_ruta[0]      
+                                
+                                if tiempo_base_evento > PARAMETRO_UMBRAL: #Umbral para que eliga ambulancia que se demora menos
+                                    pass
 
-                            info_ruta = lista_rutas_bases[contador]
-                            tiempo_base_evento = info_ruta[0]      
-                            
-                            if tiempo_base_evento > 0.5: #Umbral para que eliga ambulancia que se demora menos
-                                pass
-
+                                else:
+                                    # print("ALGO CON MAYÚSCULA HARTO HARTO HARTO \n \n ")
+                                    hay_ambulancia = 1
+                                    ambulancia_elegida = ambulancia
+                                    #no_disponible
+                                    ##ASIGNAR LA AMBULANCIA
+                                    ambulancia_elegida.disponible = False
+                                    evento.ambulancia = ambulancia
+                                    # print(f"Hora que va al evento {evento.hora_partida}\n Tiempo que va al evento {tiempo_base_evento}\n Tiempo Atención {evento.atencion}")
+                                    hora_salida_centro = floor(evento.hora_partida + tiempo_base_evento + evento.atencion) # Tiempo para poner al diccionario como KEy
+                                    hora_salida_centro_2 = evento.hora_partida + tiempo_base_evento + evento.atencion #Tiempo que se suma 
+                                    # print("ID DE LA BASE QUE ENTRÓ", id_base)
+                                    # print("CONTADOR", contador)
+                                    break
+                                
                             else:
-                                # print("ALGO CON MAYÚSCULA HARTO HARTO HARTO \n \n ")
-                                hay_ambulancia = 1
-                                ambulancia_elegida = ambulancia
-                                #no_disponible
-                                ##ASIGNAR LA AMBULANCIA
-                                ambulancia_elegida.disponible = False
-                                evento.ambulancia = ambulancia
-                                # print(f"Hora que va al evento {evento.hora_partida}\n Tiempo que va al evento {tiempo_base_evento}\n Tiempo Atención {evento.atencion}")
-                                hora_salida_centro = floor(evento.hora_partida + tiempo_base_evento + evento.atencion) # Tiempo para poner al diccionario como KEy
-                                hora_salida_centro_2 = evento.hora_partida + tiempo_base_evento + evento.atencion #Tiempo que se suma 
-                                # print("ID DE LA BASE QUE ENTRÓ", id_base)
-                                # print("CONTADOR", contador)
-                                break
-                            
-                        else:
-                            pass
+                                pass
+                    if hay_ambulancia == 1:
+                        break
+                    
+                contador +=1
                 if hay_ambulancia == 1:
                     break
-                
-            contador +=1
-            if hay_ambulancia == 1:
-                break
+            contador_bases += 1
         # print(contador)
+        #LUEGO DE BUSCAR TODAS LAS AMBLANCIAS EN LAS BASES, SI NO HAY DISPONIBLES SE MANDA A LA COLA
         if hay_ambulancia == 0:
             self.lista_cola.append(evento)
             return False
             #print("UUUUUUUUUUUUUUUUUUUUUU")
+
+        #MANEJO TIEMPOS EVENTO A CENTRO
         else:
             #ambulancia_elegida.disponible = False
             #print("COLOLCOAOLCOAS")
@@ -474,6 +592,7 @@ class CallCenter:
             print(id_nodo_base_retornar,type(id_nodo_base_retornar))
             
 
+        #MANEJO TIEMPO DESDE CENTRO HASTA DEVUELTA A LA BASE
             if hora_salida_base >= 24:
                 fstring2 = f"Tiempo {23}" 
             lista_centros_bases = self.dicc_centros_bases[fstring2][str(id_centro)]  #Lista desde centro a lista de bases (primero debiese ser la que le pertenece y no las más cercana)
@@ -490,7 +609,7 @@ class CallCenter:
                     #     \nTiempo Preparacion {evento.preparacion},\nTiempo Atencion {evento.atencion},\nTiempo Derivacion {evento.derivacion},\nTiempo Llegada {evento.tiempo_llegada},\nTiempo cola {evento.tiempo_en_cola} ")
                         
                     # print("Tiempo de Respuesta : ",evento.preparacion + evento.viaje_llamado )
-                    # self.lista_de_tiempos_respuesta.append(evento.preparacion + evento.viaje_llamado)
+                    self.lista_de_tiempos_respuesta.append(evento.preparacion + evento.viaje_llamado)
 
                     evento.actualizar_duracion_total()
                     evento.duracion_total = evento.duracion_total - evento.tiempo_en_cola 
@@ -657,57 +776,8 @@ class CentrosSalud:
     def __getitem__(self, item):
         return item
 
-class Eventos:
-    _id = 0
-    def __init__(self, tiempo_inicio, posicion_x, posicion_y, preparacion, atencion, derivacion):
-        self._id += 1
-        self.posicion_x = posicion_x
-        self.posicion_y = posicion_y
-        #self.bases = self.asignar_base()
-        self.preparacion = preparacion / 60 #DESDE QUE LLAMAN HASTA QUE LA AMBULANCIA SALE
-        self.viaje_llamado = 0  #CUANTO ME DEMORO EN LLEGAR AL ACCIDENTE
-        self.atencion = atencion / 60     #DESDE QUE LLEGA HASTA EL LLAMADO, HASTA QUE PARTE AL CENTRO
-        self.viaje_hospital = 0 #CUANTO ME DEMORO EN LLEGAR AL HOSPITAL
-        self.derivacion = derivacion / 60  #DESDE QUE LLEGA AL HOSPITAL, HASTA QUE PARTE A LA BASE
-        self.viaje_base = 0    #CUANTO ME DEMORO EN RETORNAR A LA BASE
-        self.tiempo_llegada = tiempo_inicio
-        # self.tiempo_termino = None
-        self.tiempo_en_cola = 0
-        self.duracion_total = self.tiempo_en_cola + self.preparacion + self.viaje_llamado + self.atencion +  self.viaje_hospital + self.derivacion \
-            + self.viaje_base
-        self.nodo_asociado = None
-        self.hora_partida = self.tiempo_llegada + self.preparacion
-        #self.hora_evento = floor(tiempo_inicio)
-        self.ambulancia = None
-        
-    
-
-    def actualizar_duracion_total(self):
-        self.duracion_total = self.tiempo_en_cola + self.preparacion + self.viaje_llamado + self.atencion +  self.viaje_hospital + self.derivacion \
-            + self.viaje_base
-    #SUMAR TIEMPOS
-    
-    def obtener_viaje_llamado(self): #DE LAS 20 RUTAS MÍNIMAS, ME QUEDO CON LA QUE ESTÁ MÁS CERCANA Y TIENE AMBULANCIA DISP
-        pass
-    def obtener_viaje_hospital(self):
-        pass
-    def obtener_viaje_base(self):
-        pass
 
 
-    def generar_tiempo_termino (self):
-        tiempo = self.preparacion + self.viaje_llamado + self.atencion + self.viaje_hospital + self.derivacion + self.viaje_base
-        return(tiempo)
-
-    #ASIGNAR UNA BASE
-
-    def asignar_base(self):
-        lista_bases_que_cubren = []
-         #cargar las bases que cubren el evento
-
-         #INSTANCIAR BASES?
-
-        return(lista_bases_que_cubren)
 
 
         
@@ -734,18 +804,24 @@ call_center.run()
 print("Lista duraciones",call_center.lista_de_duraciones)
 print(len(call_center.lista_de_duraciones))
 
-for evento_cola in call_center.lista_cola:
-    hora_salida = floor(evento_cola.hora_partida)
-    fstring=f"Tiempo {hora_salida}" 
-    # id_nodo_base = evento_cola.ambulancia.base_asignada.nodo_asociado
-    lista_rutas_bases =  call_center.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
-    print(lista_rutas_bases[0], lista_rutas_bases[1])
+# for evento_cola in call_center.lista_cola:
+#     hora_salida = floor(evento_cola.hora_partida)
+#     fstring=f"Tiempo {hora_salida}" 
+#     # id_nodo_base = evento_cola.ambulancia.base_asignada.nodo_asociado
+#     lista_rutas_bases =  call_center.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
+#     print(lista_rutas_bases[0], lista_rutas_bases[1])
+
+for lista in call_center.lista_bases_creadas:
+    for ambulancia in lista.lista_ambulancias_base:
+        print("Estado Ambulancias",ambulancia.disponible)
+print("Contador ambulancias", call_center.contador_ambulancia)
 
 
+plt.plot(call_center.lista_de_duraciones) # todo el viaje
+plt.plot(call_center.lista_de_tiempos_respuesta) # preparacion + viaje a evento
+plt.show()
 
-# plt.plot(call_center.lista_de_duraciones)
-# plt.plot(call_center.lista_de_tiempos_respuesta)
-# plt.show()
+
 # print("LLEGADAS", call_center.lista_de_llegadas)
 # print("\n")
 # print("LARGO LLegadas", len(call_center.lista_de_llegadas))
@@ -762,6 +838,7 @@ tiempo_total_preparacion = 0
 tiempo_total_atencion = 0
 tiempo_total_derivar = 0
 tiempo_total = tiempo_total_preparacion + tiempo_total_atencion + tiempo_total_derivar
+
 
 # medidas desempeño sobre tiempo de colas en esta línea
 

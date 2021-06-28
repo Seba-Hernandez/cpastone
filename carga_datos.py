@@ -34,13 +34,14 @@ def cargar_eventos():
         eventos = archivo.readlines()
         i = 0  # Después se borrará
         for fila in eventos[1:]:
+            print(fila)
             fila = fila.strip().split(",")
             lista_eventos.append(fila)
             i += 1  # Después se borrarán estas líneas
             if i == 79:
                 break
             else:
-                continue
+                continue 
 
     return lista_eventos
 
