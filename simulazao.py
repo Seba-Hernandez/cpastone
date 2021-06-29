@@ -6,8 +6,11 @@ import time
 from math import sqrt, floor
 from datetime import datetime
 from datetime import timedelta
+from math import trunc
+import pandas as pd
 
 from numpy import printoptions
+import numpy as np
 from carga_datos import cargar_bases, cargar_centros, cargar_eventos, cargar_nodos
 from random import choice, shuffle
 import networkx as nx
@@ -18,12 +21,16 @@ import matplotlib.pyplot as plt
 def segundo_elemento(elem):
     return elem.duracion_total + elem.tiempo_llegada
 
+def tiempo_24_horas(tiempo):
+    formato_24_horas =trunc(tiempo - 24*trunc(tiempo/24))
+    # print(formato_24_horas)
+    return(formato_24_horas)
+
 PARAMETRO_UMBRAL = 1
 
 def manejo_tiempo(fecha):
     datemask = '%H:%M:%S'
     objeto = datetime.strptime(fecha, datemask)
-    
     return objeto
 
 
@@ -113,8 +120,7 @@ class Base:
         self.num_termino = []
         self.num_manejados = []
 
-        
-
+    
 
     def enviar_ambulancia(self):
         if self.ocupacion == 1:
@@ -146,6 +152,8 @@ class CallCenter:
         self.grafo = None
 
         self.contador_ambulancia = 0
+
+        self.lista_tiempos_en_cola = []
 
         # usamos datetime para manejar temporalidad
         tiempo = 0
@@ -217,9 +225,19 @@ class CallCenter:
 
     def cargar_lista_llegadas(self):
         print("LISTA EVENTOS",self.lista_eventos[0])
-        for evento in self.lista_eventos:            
-            obj_evento = Eventos(float(evento[2]), float(evento[0]), float(evento[1]), float(evento[3]), float(evento[4]), float(evento[5]))
-            self.lista_de_llegadas.append(obj_evento)
+        self.contador_dias = 0
+        hora_primer_dia = float(0)
+        for evento in self.lista_eventos:
+            formato_hora = evento[2].split(":")
+            hora_transformada = float(formato_hora[0])+float(formato_hora[1])/60
+            hora_comparar = float(hora_transformada)
+            if  hora_comparar < hora_primer_dia:
+                self.contador_dias += 1
+                hora_primer_dia = hora_comparar
+            else:
+                hora_primer_dia = hora_comparar
+                obj_evento = Eventos((24*self.contador_dias) + hora_transformada, float(evento[0]), float(evento[1]), float(evento[3]), float(evento[4]), float(evento[5]))
+                self.lista_de_llegadas.append(obj_evento)
         
 
     
@@ -263,6 +281,7 @@ class CallCenter:
         # return eventos[tiempos.index(tiempo_prox_evento)]
     
     def run(self):
+        t_inicial = time.time()
         capstone = 0
         while capstone == 0:
             string_evento = self.proximo_evento()
@@ -273,6 +292,9 @@ class CallCenter:
             evento = self.manejo_listas_eventos(string_evento)
             if len(self.lista_de_llegadas) == 0 and len(self.lista_de_terminos) == 0: #and len(self.lista_cola) == 0:
                 capstone = 1
+                t_final = time.time()
+        t_total = t_final-t_inicial
+        print("TIEMPO DE SIMULACION: ", t_total, " SEGUNDOS \n")
         
             
     
@@ -284,7 +306,7 @@ class CallCenter:
             # evento_lista = self.lista_cola.popleft()
         
         for evento_cola in self.lista_cola:
-            hora_salida = floor(evento_cola.hora_partida)
+            hora_salida = tiempo_24_horas(evento_cola.hora_partida)
             fstring=f"Tiempo {hora_salida}" 
             id_nodo_base = evento_lista.ambulancia.base_asignada.nodo_asociado
             lista_rutas_bases =  self.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)] 
@@ -300,6 +322,7 @@ class CallCenter:
                         evento_cola.ambulancia = evento_lista.ambulancia
 
                         evento_cola.tiempo_en_cola = self.tiempo_actual - evento_cola.tiempo_llegada
+                        self.lista_tiempos_en_cola.append(evento_cola.tiempo_en_cola)
                         # evento_cola.actualizar_duracion_total()
                         self.tiempo_actual = evento_cola.tiempo_llegada + evento_cola.tiempo_en_cola  #+ evento_cola.duracion_total
                         evento_cola.tiempo_llegada = self.tiempo_actual
@@ -308,24 +331,24 @@ class CallCenter:
 
                         #MANEJO TIEMPO BASE A EVENTO
 
-                        hora_salida_centro = floor(evento_cola.tiempo_llegada + tiempo_base_evento + evento_cola.atencion) # Tiempo para poner al diccionario como KEy
+                        hora_salida_centro = tiempo_24_horas(evento_cola.tiempo_llegada + tiempo_base_evento + evento_cola.atencion) # Tiempo para poner al diccionario como KEy
                         hora_salida_centro_2 = evento_cola.tiempo_llegada + tiempo_base_evento + evento_cola.atencion #Tiempo que se suma 
 
                         fstring=f"Tiempo {hora_salida_centro}"
-                        if hora_salida_centro >= 24:
-                            fstring = f"Tiempo {23}" 
+                        # if hora_salida_centro >= 24:
+                        #     fstring = f"Tiempo {23}" 
                         ruta_evento_centro =  self.dicc_eventos_centros[fstring][str(evento_cola.nodo_asociado)]
                         id_centro = ruta_evento_centro[2]
                         tiempo_evento_centro = ruta_evento_centro[0]
 
-                        hora_salida_base = floor(hora_salida_centro_2 + tiempo_evento_centro + evento_cola.derivacion)
+                        hora_salida_base = tiempo_24_horas(hora_salida_centro_2 + tiempo_evento_centro + evento_cola.derivacion)
                         fstring2 = f"Tiempo {hora_salida_base}"  #hora_salida_base
 
                         id_nodo_base_retornar = evento_cola.ambulancia.base_asignada.nodo_asociado
-                        print(id_nodo_base_retornar,type(id_nodo_base_retornar))
+                        # print(id_nodo_base_retornar,type(id_nodo_base_retornar))
 
-                        if hora_salida_base >= 24:
-                            fstring2 = f"Tiempo {23}" 
+                        # if hora_salida_base >= 24:
+                        #     fstring2 = f"Tiempo {23}" 
                         lista_centros_bases = self.dicc_centros_bases[fstring2][str(id_centro)]  #Lista desde centro a lista de bases (primero debiese ser la que le pertenece y no las más cercana)
                         # print(evento._id, "EVENTO IDD")
 
@@ -344,7 +367,7 @@ class CallCenter:
 
                                 evento_cola.actualizar_duracion_total()
                                 evento_cola.duracion_total = evento_cola.duracion_total - evento_cola.tiempo_en_cola 
-                                print("Duracion TOtal: ",evento_cola.duracion_total )
+                                # print("Duracion TOtal: ",evento_cola.duracion_total )
                                 self.lista_de_duraciones.append(evento_cola.duracion_total)
                                 break
 
@@ -361,7 +384,7 @@ class CallCenter:
 
         elif var_estado == False:
             self.contador_ambulancia += 1
-            print("LA VARIEBLE DE ESTADO ES FALSSE")
+            # print("LA VARIEBLE DE ESTADO ES FALSSE")
 
 
     def manejo_listas_eventos(self, string_evento):
@@ -374,11 +397,11 @@ class CallCenter:
                 self.lista_eventos_manejados.append(evento_lista)
                 evento_lista.ambulancia.disponible = True
 
-                print(f"Tiempo Actual Evento Término: {self.tiempo_actual}")
-                print("Lista Llegadas",len(self.lista_de_llegadas))
-                print("Lista Términos",len(self.lista_de_terminos))
-                print("Lista Colas",len(self.lista_cola))
-                print("Lista manejados",len(self.lista_eventos_manejados),"\n")
+                # print(f"Tiempo Actual Evento Término: {self.tiempo_actual}")
+                # print("Lista Llegadas",len(self.lista_de_llegadas))
+                # print("Lista Términos",len(self.lista_de_terminos))
+                # print("Lista Colas",len(self.lista_cola))
+                # print("Lista manejados",len(self.lista_eventos_manejados),"\n")
                 # print(f"El evento terminó, Tiempo Actual {self.tiempo_actual}")
 
                 if len(self.lista_cola) != 0:
@@ -435,11 +458,11 @@ class CallCenter:
                 if tiene_ambulancia == True:
                     self.lista_de_terminos.append(evento_lista)
                 
-                print(f"Tiempo Actual Evento Llegada {self.tiempo_actual}")
-                print("Lista Llegadas",len(self.lista_de_llegadas))
-                print("Lista Términos",len(self.lista_de_terminos))
-                print("Lista Colas",len(self.lista_cola))
-                print("Lista manejados",len(self.lista_eventos_manejados),"\n")
+                # print(f"Tiempo Actual Evento Llegada {self.tiempo_actual}")
+                # print("Lista Llegadas",len(self.lista_de_llegadas))
+                # print("Lista Términos",len(self.lista_de_terminos))
+                # print("Lista Colas",len(self.lista_cola))
+                # print("Lista manejados",len(self.lista_eventos_manejados),"\n")
                 #print(f"iNFO DEL EVENTO {evento_lista.tiempo_llegada }")
 
                 return evento_lista
@@ -468,11 +491,11 @@ class CallCenter:
                     tiene_ambulancia = self.cargar_evento_llegada(evento_lista)
                     if tiene_ambulancia == True:
                         self.lista_de_terminos.append(evento_lista)
-                    print(f"Tiempo Actual Comparacion: Llegada primero {self.tiempo_actual}")
-                    print("Lista Llegadas",len(self.lista_de_llegadas))
-                    print("Lista Términos",len(self.lista_de_terminos))
-                    print("Lista Colas",len(self.lista_cola))
-                    print("Lista manejados",len(self.lista_eventos_manejados),"\n")
+                    # print(f"Tiempo Actual Comparacion: Llegada primero {self.tiempo_actual}")
+                    # print("Lista Llegadas",len(self.lista_de_llegadas))
+                    # print("Lista Términos",len(self.lista_de_terminos))
+                    # print("Lista Colas",len(self.lista_cola))
+                    # print("Lista manejados",len(self.lista_eventos_manejados),"\n")
 
                     # FUncion que completa atributos de tiempos de viaje con DIJKSTRA del evento de termino que reciba evento_lista
                     
@@ -488,11 +511,11 @@ class CallCenter:
                     self.lista_eventos_manejados.append(evento_lista)
                     self.tiempo_actual = evento_lista.tiempo_llegada + evento_lista.duracion_total
 
-                    print(f"Tiempo Actual Comparacion: Término primero: {self.tiempo_actual}")
-                    print("Lista Llegadas",len(self.lista_de_llegadas))
-                    print("Lista Términos",len(self.lista_de_terminos))
-                    print("Lista Colas",len(self.lista_cola))
-                    print("Lista manejados",len(self.lista_eventos_manejados),"\n")
+                    # print(f"Tiempo Actual Comparacion: Término primero: {self.tiempo_actual}")
+                    # print("Lista Llegadas",len(self.lista_de_llegadas))
+                    # print("Lista Términos",len(self.lista_de_terminos))
+                    # print("Lista Colas",len(self.lista_cola))
+                    # print("Lista manejados",len(self.lista_eventos_manejados),"\n")
                     #print(f"LARGO DE COLAAAAAAAA: {len(self.lista_cola)}")
 
                     if len(self.lista_cola) != 0:
@@ -516,17 +539,17 @@ class CallCenter:
     def cargar_evento_llegada(self, evento):
         hay_ambulancia = 0 #NO hay ambulancia
         id_nodo_evento = evento.nodo_asociado   #DETERMINAR TIEMPOS QUE NO TENEMOS
-        hora_salida = floor(evento.hora_partida)
+        hora_salida = tiempo_24_horas(evento.hora_partida)
         fstring=f"Tiempo {hora_salida}" 
-        if hora_salida >= 24:
-                fstring = f"Tiempo {23}"
+        # if hora_salida >= 24:
+        #         fstring = f"Tiempo {23}"
 
         lista_rutas_bases =  self.dicc_base_eventos[fstring][str(id_nodo_evento)]
         contador = 0
         #REVISIÓN DE BASES PARA VER AMBULANCIAS DISPONIBLES
         contador_bases = 0
         for lista in lista_rutas_bases:
-            if contador_bases <= 3:
+            if contador_bases <= 2:
                 id_base = lista[2]  #Base más cercana 
                 
                 for objeto_base in self.lista_bases_creadas:
@@ -553,7 +576,7 @@ class CallCenter:
                                     ambulancia_elegida.disponible = False
                                     evento.ambulancia = ambulancia
                                     # print(f"Hora que va al evento {evento.hora_partida}\n Tiempo que va al evento {tiempo_base_evento}\n Tiempo Atención {evento.atencion}")
-                                    hora_salida_centro = floor(evento.hora_partida + tiempo_base_evento + evento.atencion) # Tiempo para poner al diccionario como KEy
+                                    hora_salida_centro = tiempo_24_horas(evento.hora_partida + tiempo_base_evento + evento.atencion) # Tiempo para poner al diccionario como KEy
                                     hora_salida_centro_2 = evento.hora_partida + tiempo_base_evento + evento.atencion #Tiempo que se suma 
                                     # print("ID DE LA BASE QUE ENTRÓ", id_base)
                                     # print("CONTADOR", contador)
@@ -580,21 +603,22 @@ class CallCenter:
             #ambulancia_elegida.disponible = False
             #print("COLOLCOAOLCOAS")
             fstring=f"Tiempo {hora_salida_centro}"
-            if hora_salida_centro >= 24:
-                fstring = f"Tiempo {23}" 
+            # print(f"Tiempo hora salida centro {hora_salida_centro}")
+            # if hora_salida_centro >= 24:
+            #     fstring = f"Tiempo {23}" 
             ruta_evento_centro =  self.dicc_eventos_centros[fstring][str(id_nodo_evento)]
             id_centro = ruta_evento_centro[2]
             tiempo_evento_centro = ruta_evento_centro[0]
 
-            hora_salida_base = floor(hora_salida_centro_2 + tiempo_evento_centro + evento.derivacion)
+            hora_salida_base = tiempo_24_horas(hora_salida_centro_2 + tiempo_evento_centro + evento.derivacion)
             fstring2 = f"Tiempo {hora_salida_base}"  #hora_salida_base
             id_nodo_base_retornar = ambulancia_elegida.base_asignada.nodo_asociado
-            print(id_nodo_base_retornar,type(id_nodo_base_retornar))
+            # print(id_nodo_base_retornar,type(id_nodo_base_retornar))
             
 
         #MANEJO TIEMPO DESDE CENTRO HASTA DEVUELTA A LA BASE
-            if hora_salida_base >= 24:
-                fstring2 = f"Tiempo {23}" 
+            # if hora_salida_base >= 24:
+            #     fstring2 = f"Tiempo {23}" 
             lista_centros_bases = self.dicc_centros_bases[fstring2][str(id_centro)]  #Lista desde centro a lista de bases (primero debiese ser la que le pertenece y no las más cercana)
             # print(evento._id, "EVENTO IDD")
 
@@ -613,19 +637,19 @@ class CallCenter:
 
                     evento.actualizar_duracion_total()
                     evento.duracion_total = evento.duracion_total - evento.tiempo_en_cola 
-                    print("Duracion TOtal: ",evento.duracion_total )
+                    # print("Duracion TOtal: ",evento.duracion_total )
                     self.lista_de_duraciones.append(evento.duracion_total)
                     break
             return True
 
     def cargar_diccionarios(self):
-        with open("diccionario_24_tiempos_rutas_bases_a_eventos.json") as f:
+        with open("dijkstra_final_bases_a_eventos.json") as f:
             self.dicc_base_eventos = json.load(f)
             
-        with open("diccionario_24_tiempos_rutas_eventos_a_centros.json") as f:
+        with open("dijkstra_final_eventos_a_centros.json") as f:
             self.dicc_eventos_centros = json.load(f)
             
-        with open("diccionario_24_tiempos_rutas_centros_a_bases.json") as f:
+        with open("dijkstra_final_centros_a_bases.json") as f:
             self.dicc_centros_bases = json.load(f)
             
     def asociar_evento_nodo(self):
@@ -801,8 +825,8 @@ lista_nodos = cargar_nodos()
 
 call_center = CallCenter()
 call_center.run()
-print("Lista duraciones",call_center.lista_de_duraciones)
-print(len(call_center.lista_de_duraciones))
+# print("Lista duraciones",call_center.lista_de_duraciones)
+# print(len(call_center.lista_de_duraciones))
 
 # for evento_cola in call_center.lista_cola:
 #     hora_salida = floor(evento_cola.hora_partida)
@@ -811,15 +835,54 @@ print(len(call_center.lista_de_duraciones))
 #     lista_rutas_bases =  call_center.dicc_base_eventos[fstring][str(evento_cola.nodo_asociado)]
 #     print(lista_rutas_bases[0], lista_rutas_bases[1])
 
-for lista in call_center.lista_bases_creadas:
-    for ambulancia in lista.lista_ambulancias_base:
-        print("Estado Ambulancias",ambulancia.disponible)
-print("Contador ambulancias", call_center.contador_ambulancia)
+# for lista in call_center.lista_bases_creadas:
+#     for ambulancia in lista.lista_ambulancias_base:
+#         print("Estado Ambulancias",ambulancia.disponible)
+# print("Contador ambulancias", call_center.contador_ambulancia)
+
+print("Días simulados: ",call_center.contador_dias)
+
+print(f"Tiempo Actual Evento Término: {call_center.tiempo_actual}")
+print("Lista Llegadas",len(call_center.lista_de_llegadas))
+print("Lista Términos",len(call_center.lista_de_terminos))
+print("Lista Colas",len(call_center.lista_cola))
+print("Lista manejados",len(call_center.lista_eventos_manejados))
+print(f"El evento terminó, Tiempo Actual {call_center.tiempo_actual}")
 
 
-plt.plot(call_center.lista_de_duraciones) # todo el viaje
-plt.plot(call_center.lista_de_tiempos_respuesta) # preparacion + viaje a evento
-plt.show()
+my_array = np.array(call_center.lista_de_duraciones)
+# print(my_array)
+df = pd.DataFrame(my_array, columns = ['Duraciones'])
+# print(df)
+print(df.describe())
+
+my_array1 = np.array(call_center.lista_de_tiempos_respuesta)
+# print(my_array1)
+df1 = pd.DataFrame(my_array1, columns = ['Tiempo de Respuesta'])
+# print(df1)
+print(df1.describe())
+
+my_array2 = np.array(list(set(call_center.lista_tiempos_en_cola)))
+# print(my_array2)
+df2 = pd.DataFrame(my_array2, columns = ['Tiempos en Cola'])
+# print(df2)
+print(df2.describe())
+
+# a = np.array(call_center.lista_tiempos_en_cola)  
+# b=np.mean(a)  
+# c=np.median(a)  
+# # d=np.quantile(a, q = 0.1)  
+# e=np.std(a)  
+# print(f"PROMEDIO: {b}\nMediana: {c}\n Std: {e}")
+
+#PLOT MEDIDAS DESEMPEÑO
+
+# plt.plot(call_center.lista_de_duraciones) # todo el viaje
+# plt.plot(call_center.lista_de_tiempos_respuesta) # preparacion + viaje a evento
+# plt.show()
+# plt.plot(call_center.lista_tiempos_en_cola) 
+# plt.show()
+
 
 
 # print("LLEGADAS", call_center.lista_de_llegadas)

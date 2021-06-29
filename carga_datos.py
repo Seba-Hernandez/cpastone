@@ -27,23 +27,43 @@ def cargar_centros():
 
     return lista_centros
 
+# EVENTOS EN FORMATO HORA string HH:MM CON SEPARACIÓN DE COMA (;)
 def cargar_eventos():
     lista_eventos = list()
-    ruta = path.join("Eventos_horario_en_horas.csv")
+    ruta = path.join("eventos.csv")
     with open(ruta, "r") as archivo:
         eventos = archivo.readlines()
         i = 0  # Después se borrará
         for fila in eventos[1:]:
-            print(fila)
-            fila = fila.strip().split(",")
+            # print(fila)
+            fila = fila.strip().split(";")
             lista_eventos.append(fila)
-            i += 1  # Después se borrarán estas líneas
-            if i == 79:
+            i += 1  # Después se borrarán estas líneas  #
+            if i == 2001: #Día 1: 79, D2 = 149, D3 = 239, D7 = 506, D15 = 1022, D31 = 2001
                 break
             else:
                 continue 
 
     return lista_eventos
+
+# EVENTOS EN FORMATO HORA FLOAT CON SEPARACIÓN DE COMA (,)
+# def cargar_eventos():
+#     lista_eventos = list()
+#     ruta = path.join("Eventos_horario_en_horas.csv")
+#     with open(ruta, "r") as archivo:
+#         eventos = archivo.readlines()
+#         i = 0  # Después se borrará
+#         for fila in eventos[1:]:
+#             print(fila)
+#             fila = fila.strip().split(",")
+#             lista_eventos.append(fila)
+#             i += 1  # Después se borrarán estas líneas  #
+#             if i == 239: #Día 1: 79, D2 = 149, D3 = 239
+#                 break
+#             else:
+#                 continue 
+
+#     return lista_eventos
 
 def cargar_nodos():
     lista_nodos = list()

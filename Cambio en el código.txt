@@ -1,0 +1,13 @@
+Cambios en sim:
+carga_datos(): Ahora lee csv eventos en formato string "HH:MM"
+tiempo_24_horas(): Pasa string "HH:MM" a float de hora
+
+
+Bases más cercanas: 547
+Print de Tiempos: 400, 461, 494, 514, Duraaionn total: 640, 370
+
+
+
+
+
+ 

@@ -43,9 +43,38 @@ def manejo_tiempo(fecha):
     
     return objeto
 
-a = manejo_tiempo("19:41")
+def suma_tiempo(fecha1,fecha2):
+    datemask = '%H:%M'
+    objeto1 = datetime.strptime(fecha1, datemask)
+    objeto2 = datetime.strptime(fecha2, datemask)
 
-print(a.hour)
+    suma_hora = objeto1.hour + objeto2.hour
+    suma_min = objeto1.minute + objeto2.minute
+
+    if suma_hora > 23:
+        
+
+
+def resta_tiempo(fecha1, fecha2):
+    datemask = '%H:%M'
+    objeto1 = datetime.strptime(fecha1, datemask)
+    objeto2 = datetime.strptime(fecha2, datemask)
+
+    resta_horario = objeto2 - objeto1
+    resta_horas = (resta_horario.seconds)/(60*60)
+
+    return [str(resta_horario)]#, resta_horas]
+
+
+a = "23:00"
+b = "03:00"
+
+# c = a+ b
+# print(c)
+
+print(resta_tiempo(b,a))
+print(resta_tiempo(a,b))
+
 
 
 
