@@ -65,6 +65,24 @@ def cargar_bases_de_solucion(nombre_archivo_solucion):
     return list(set(lista_id_bases))
 
 
+def cargar_solucion_a_diccionario(nombre_archivo_solucion):
+    with open(nombre_archivo_solucion, newline='') as file:
+        reader = csv.reader(file)
+        diccionario_bases = dict()
+        contador = 0
+        for row in reader:
+            if contador > 0:
+                lista = row[0].split(";")
+                id_base = lista[0]
+                cantidad_ambulancias = lista[1]
+                diccionario_bases[id_base] = cantidad_ambulancias
+                
+                
+            contador +=1
+    return diccionario_bases
+        
+                
+
 
 # EVENTOS EN FORMATO HORA FLOAT CON SEPARACIÓN DE COMA (,)
 # def cargar_eventos():
