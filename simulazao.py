@@ -11,6 +11,7 @@ import pandas as pd
 
 from numpy import printoptions
 import numpy as np
+from demanda_sintetica import generador_demanda_sintetica
 from carga_datos import cargar_bases, cargar_centros, cargar_eventos, cargar_nodos, cargar_bases_de_solucion, cargar_solucion_a_diccionario
 from random import choice, shuffle
 import networkx as nx
@@ -136,14 +137,17 @@ class Base:
         return item
 
 class CallCenter:
-    def __init__(self ):
+    def __init__(self, string_csv_generado):
         self.lista_bases = []
-        self.lista_eventos = cargar_eventos()
+        
+        self.lista_eventos = cargar_eventos(string_csv_generado)
         self.lista_centros_salud_creados = []
         self.lista_bases_creadas = []
         self.lista_ambulancias_creadas = []
         #Listas para decidir
         self.lista_eventos_cola = []
+        
+        
 
         self.lista_de_llegadas = [] 
         self.lista_de_terminos = []
@@ -270,29 +274,29 @@ class CallCenter:
 
 
         # #solución modelo 20 ambulancias
-        # self.PARAMETRO_UMBRAL = 2
-        # lista_bases = cargar_bases()
-        # lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
-        # j = 0
-        # i = 0
-        # [3201, 3077, 2824, 3989, 2465, 2466, 2984, 2883, 2244, 4423, 4296, 3017, 3662, 2639, 3412, 2004, 4191, 4065, 4068, 2151, 4459, 3436, 3183, 3696, 2421, 3071]
+        self.PARAMETRO_UMBRAL = 2
+        lista_bases = cargar_bases()
+        lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
+        j = 0
+        i = 0
+        [3201, 3077, 2824, 3989, 2465, 2466, 2984, 2883, 2244, 4423, 4296, 3017, 3662, 2639, 3412, 2004, 4191, 4065, 4068, 2151, 4459, 3436, 3183, 3696, 2421, 3071]
 
-        # dic_ambulancias_por_base = {2824:1, 2465:2, 4423:2, 3412:4, 2004:1, 4065:3, 2151:2, 3183:3, 3071:2}
-        # for base in lista_bases:
-        #     Base_n = Base(base[0], base[1], i) 
-        #     i += 1
-        #     self.lista_bases_creadas.append(Base_n)
-        # for base in self.lista_bases_creadas:
-        #     base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
-        # #print(self.lista_bases_creadas)
-        # for id_nodo_asociado_a_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
-        #     for base in self.lista_bases_creadas:
-        #         if int(id_nodo_asociado_a_base) == base.nodo_asociado:
-        #             for k in range(0, cantidad_ambulancias):
-        #                 base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
-        #                 base.activada = True
-        #                 self.lista_ambulancias_creadas[j].base_asignada = base
-        #                 j += 1
+        dic_ambulancias_por_base = {2824:1, 2465:2, 4423:2, 3412:4, 2004:1, 4065:3, 2151:2, 3183:3, 3071:2}
+        for base in lista_bases:
+            Base_n = Base(base[0], base[1], i) 
+            i += 1
+            self.lista_bases_creadas.append(Base_n)
+        for base in self.lista_bases_creadas:
+            base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
+        #print(self.lista_bases_creadas)
+        for id_nodo_asociado_a_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
+            for base in self.lista_bases_creadas:
+                if int(id_nodo_asociado_a_base) == base.nodo_asociado:
+                    for k in range(0, cantidad_ambulancias):
+                        base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
+                        base.activada = True
+                        self.lista_ambulancias_creadas[j].base_asignada = base
+                        j += 1
 
         #solución clusters 26 ambulancias cobertura al ojo
         # self.PARAMETRO_UMBRAL = 2
@@ -347,7 +351,7 @@ class CallCenter:
         #                 j += 1
 
         #solucion clusters considerando 20 ambulancias cobertura al ojo
-        # # self.PARAMETRO_UMBRAL = 2
+        # self.PARAMETRO_UMBRAL = 2
         # lista_bases = cargar_bases()
         # dic_ambulancias_por_base = cargar_solucion_a_diccionario("asignacion_ambulancias2.csv")
         # j = 0
@@ -371,30 +375,30 @@ class CallCenter:
 
         
         #solución modelo 10 ambulancias
-        self.PARAMETRO_UMBRAL = 2
-        self.cargar_lista_ambulancias2(10)
-        lista_bases = cargar_bases()
-        lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
-        j = 0
-        i = 0
-        #[3201, 3077, 2824, 3989, 2465, 2466, 2984, 2883, 2244, 4423, 4296, 3017, 3662, 2639, 3412, 2004, 4191, 4065, 4068, 2151, 4459, 3436, 3183, 3696, 2421, 3071]
+        # self.PARAMETRO_UMBRAL = 2
+        # self.cargar_lista_ambulancias2(10)
+        # lista_bases = cargar_bases()
+        # lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
+        # j = 0
+        # i = 0
+        # #[3201, 3077, 2824, 3989, 2465, 2466, 2984, 2883, 2244, 4423, 4296, 3017, 3662, 2639, 3412, 2004, 4191, 4065, 4068, 2151, 4459, 3436, 3183, 3696, 2421, 3071]
 
-        dic_ambulancias_por_base = {2465:1, 4423:2, 3412:3, 4065:1, 2151:1, 3183:1, 3071:1}
-        for base in lista_bases:
-            Base_n = Base(base[0], base[1], i) 
-            i += 1
-            self.lista_bases_creadas.append(Base_n)
-        for base in self.lista_bases_creadas:
-            base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
-        #print(self.lista_bases_creadas)
-        for id_nodo_asociado_a_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
-            for base in self.lista_bases_creadas:
-                if int(id_nodo_asociado_a_base) == base.nodo_asociado:
-                    for k in range(0, cantidad_ambulancias):
-                        base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
-                        base.activada = True
-                        self.lista_ambulancias_creadas[j].base_asignada = base
-                        j += 1
+        # dic_ambulancias_por_base = {2465:1, 4423:2, 3412:3, 4065:1, 2151:1, 3183:1, 3071:1}
+        # for base in lista_bases:
+        #     Base_n = Base(base[0], base[1], i) 
+        #     i += 1
+        #     self.lista_bases_creadas.append(Base_n)
+        # for base in self.lista_bases_creadas:
+        #     base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
+        # #print(self.lista_bases_creadas)
+        # for id_nodo_asociado_a_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
+        #     for base in self.lista_bases_creadas:
+        #         if int(id_nodo_asociado_a_base) == base.nodo_asociado:
+        #             for k in range(0, cantidad_ambulancias):
+        #                 base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
+        #                 base.activada = True
+        #                 self.lista_ambulancias_creadas[j].base_asignada = base
+        #                 j += 1
         
 
 
@@ -432,7 +436,9 @@ class CallCenter:
         self.contador_dias = 0
         hora_primer_dia = float(0)
         for evento in self.lista_eventos:
-            formato_hora = evento[2].split(":")
+            #print(evento[3])
+            #print(evento)
+            formato_hora = evento[3].split(":")
             hora_transformada = float(formato_hora[0])+float(formato_hora[1])/60
             hora_comparar = float(hora_transformada)
             if  hora_comparar < hora_primer_dia:
@@ -440,7 +446,8 @@ class CallCenter:
                 hora_primer_dia = hora_comparar
             else:
                 hora_primer_dia = hora_comparar
-                obj_evento = Eventos((24*self.contador_dias) + hora_transformada, float(evento[0]), float(evento[1]), float(evento[3]), float(evento[4]), float(evento[5]))
+                obj_evento = Eventos((24*self.contador_dias) + hora_transformada, float(evento[1]), float(evento[2]), float(evento[4]), float(evento[5]), float(evento[6]))
+                #def __init__(self, tiempo_inicio, posicion_x, posicion_y, preparacion, atencion, derivacion):
                 self.lista_de_llegadas.append(obj_evento)
         
 
@@ -1022,13 +1029,16 @@ class CentrosSalud:
 #     else:
 #         break
 
-lista_nodos = cargar_nodos()
+
 
 # Aquí podemos asignar el nodo a una base y centro hospitalario
 
 
-call_center = CallCenter()
-call_center.run()
+# call_center = CallCenter()
+# call_center.run()
+
+
+
 # print("Lista duraciones",call_center.lista_de_duraciones)
 # print(len(call_center.lista_de_duraciones))
 
@@ -1044,33 +1054,33 @@ call_center.run()
 #         print("Estado Ambulancias",ambulancia.disponible)
 # print("Contador ambulancias", call_center.contador_ambulancia)
 
-print("Días simulados: ",call_center.contador_dias)
+# print("Días simulados: ",call_center.contador_dias)
+# print(f"Tiempo Actual Evento Término: {call_center.tiempo_actual}")
+# print("Lista Llegadas",len(call_center.lista_de_llegadas))
+# print("Lista Términos",len(call_center.lista_de_terminos))
+# print("Lista Colas",len(call_center.lista_cola))
+# print("Lista manejados",len(call_center.lista_eventos_manejados))
+# print(f"El evento terminó, Tiempo Actual {call_center.tiempo_actual}")
 
-print(f"Tiempo Actual Evento Término: {call_center.tiempo_actual}")
-print("Lista Llegadas",len(call_center.lista_de_llegadas))
-print("Lista Términos",len(call_center.lista_de_terminos))
-print("Lista Colas",len(call_center.lista_cola))
-print("Lista manejados",len(call_center.lista_eventos_manejados))
-print(f"El evento terminó, Tiempo Actual {call_center.tiempo_actual}")
 
+# my_array = np.array(call_center.lista_de_duraciones)
+# # print(my_array)
+# df = pd.DataFrame(my_array, columns = ['Duraciones'])
+# # print(df)
+# print(df.describe())
 
-my_array = np.array(call_center.lista_de_duraciones)
-# print(my_array)
-df = pd.DataFrame(my_array, columns = ['Duraciones'])
-# print(df)
-print(df.describe())
+# my_array1 = np.array(call_center.lista_de_tiempos_respuesta)
+# # print(my_array1)
+# df1 = pd.DataFrame(my_array1, columns = ['Tiempo de Respuesta'])
+# # print(df1)
+# print(df1.describe())
 
-my_array1 = np.array(call_center.lista_de_tiempos_respuesta)
-# print(my_array1)
-df1 = pd.DataFrame(my_array1, columns = ['Tiempo de Respuesta'])
-# print(df1)
-print(df1.describe())
-
-my_array2 = np.array(list(set(call_center.lista_tiempos_en_cola)))
-# print(my_array2)
-df2 = pd.DataFrame(my_array2, columns = ['Tiempos en Cola'])
-# print(df2)
-print(df2.describe())
+# my_array2 = np.array(list(set(call_center.lista_tiempos_en_cola)))
+# # print(my_array2)
+# df2 = pd.DataFrame(my_array2, columns = ['Tiempos en Cola'])
+# mean = df2.mean()
+# # print(df2)
+# print(df2.describe())
 
 # a = np.array(call_center.lista_tiempos_en_cola)  
 # b=np.mean(a)  
@@ -1101,10 +1111,10 @@ print(df2.describe())
 # print("NUNERIO DE ANMB", len(call_center.lista_ambulancias_creadas))
 # print(call_center.lista_eventos_manejados)
 
-tiempo_total_preparacion = 0
-tiempo_total_atencion = 0
-tiempo_total_derivar = 0
-tiempo_total = tiempo_total_preparacion + tiempo_total_atencion + tiempo_total_derivar
+# tiempo_total_preparacion = 0
+# tiempo_total_atencion = 0
+# tiempo_total_derivar = 0
+# tiempo_total = tiempo_total_preparacion + tiempo_total_atencion + tiempo_total_derivar
 
 
 # medidas desempeño sobre tiempo de colas en esta línea
@@ -1124,10 +1134,181 @@ tiempo_total = tiempo_total_preparacion + tiempo_total_atencion + tiempo_total_d
 ## DESPACHO DIJKSTRA_LLEGAR ATENCION DIJKSTRA_CENTRO DERIVACIÓN DIJKSTRA_BASE
 
 
-for i in call_center.lista_bases_creadas:
-    print(f"{i}")
-    print(f"Nodo asociado: {i.nodo_asociado}")
-    print(f"Id base: {i.id}")
-    print(f"Coordenadas base:{i.posicion_x, i.posicion_y} ")
-    print(f"Lista de ambulancias de la base: {i.lista_ambulancias_base} ")
-    print("")
+
+
+
+#lista de ejecuciones de call center
+lista_callcenter = []
+
+#listas de duraciones
+lista_media_duraciones = []
+lista_maximo_duraciones = []
+lista_desviacion_estandar_duraciones = []
+lista_mediana_duraciones = []
+lista_tercer_cuartil_duraciones = []
+lista_count_duraciones = []
+
+#listas de tiempos de respuesta
+lista_media_tiempos_respuesta = []
+lista_maximo_tiempos_respuesta = []
+lista_desviacion_estandar_tiempos_respuesta = []
+lista_mediana_tiempos_respuesta = []
+lista_tercer_cuartil_tiempos_respuesta = []
+lista_count_tiempos_respuesta = []
+
+#listas de tiempos en cola
+lista_media_tiempos_cola = []
+lista_maximo_tiempos_cola = []
+lista_desviacion_estandar_tiempos_cola = []
+lista_mediana_tiempos_cola = []
+lista_tercer_cuartil_tiempos_cola = []
+lista_count_tiempos_cola = []
+
+for simulacion in range(0,2):
+    string_ruta_csv_demanda_sintetica = generador_demanda_sintetica()
+    call_center = CallCenter(string_ruta_csv_demanda_sintetica)
+    call_center.run()
+
+    #duraciones
+    my_array = np.array(call_center.lista_de_duraciones)
+    df = pd.DataFrame(my_array, columns = ['Duraciones'])
+    df_describe = df.describe()
+    #1 media
+    media_duraciones = df_describe.loc[["mean"]]
+    array_media = np.array(media_duraciones)
+    float_media = float(array_media[0][0])
+    lista_media_duraciones.append(float_media)
+    #2 maximo
+    maximo_duraciones = df_describe.loc[["max"]]
+    array_maximo = np.array(maximo_duraciones)
+    float_maximo = float(array_maximo[0][0])
+    lista_maximo_duraciones.append(float_maximo)
+    #3 desv. estandar
+    desviacion_estandar_duraciones = df_describe.loc[["std"]]
+    array_desviacion = np.array(desviacion_estandar_duraciones)
+    float_desviacion = float(array_desviacion[0][0])
+    lista_desviacion_estandar_duraciones.append(float_desviacion)
+    #4 mediana
+    mediana_duraciones = df_describe.loc[["25%"]]
+    array_mediana = np.array(mediana_duraciones)
+    float_mediana = float(array_mediana[0][0])
+    lista_mediana_duraciones.append(float_mediana)
+    #5 tercer cuartil
+    tercer_cuartil_duraciones = df_describe.loc[["75%"]]
+    array_tercer_cuartil = np.array(tercer_cuartil_duraciones)
+    float_tercer_cuartil = float(array_tercer_cuartil[0][0])
+    lista_tercer_cuartil_tiempos_respuesta.append(float_tercer_cuartil)
+    #6 count
+    count_duraciones = df_describe.loc[["count"]]
+    array_count = np.array(count_duraciones)
+    float_count = float(array_count[0][0])
+    lista_count_duraciones.append(float_count)
+
+    #tiempos de respuesta
+    my_array1 = np.array(call_center.lista_de_tiempos_respuesta)
+    df1 = pd.DataFrame(my_array1, columns = ['Tiempo de Respuesta'])
+    df_describe1 = df1.describe()    
+    #1 media
+    media_tiempos_respuesta = df_describe1.loc[["mean"]]
+    array_media = np.array(media_tiempos_respuesta)
+    float_media = float(array_media[0][0])
+    lista_media_tiempos_respuesta.append(float_media)
+    #2 maximo
+    maximo_tiempos_respuesta = df_describe1.loc[["max"]]
+    array_maximo = np.array(maximo_tiempos_respuesta)
+    float_maximo = float(array_maximo[0][0])
+    lista_maximo_tiempos_respuesta.append(float_maximo)
+    #3 desv. estandar
+    desviacion_estandar_tiempos_respuesta = df_describe1.loc[["std"]]
+    array_desviacion = np.array(desviacion_estandar_tiempos_respuesta)
+    float_desviacion = float(array_desviacion[0][0])
+    lista_desviacion_estandar_tiempos_respuesta.append(float_desviacion)
+    #4 mediana
+    mediana_tiempos_respuesta = df_describe1.loc[["25%"]]
+    array_mediana = np.array(mediana_tiempos_respuesta)
+    float_mediana = float(array_mediana[0][0])
+    lista_mediana_tiempos_respuesta.append(float_mediana)
+    #5 tercer cuartil
+    tercer_cuartil_tiempos_respuesta = df_describe1.loc[["75%"]]
+    array_tercer_cuartil = np.array(tercer_cuartil_tiempos_respuesta)
+    float_tercer_cuartil = float(array_tercer_cuartil[0][0])
+    lista_tercer_cuartil_tiempos_respuesta.append(float_tercer_cuartil)
+    #6 count
+    count_tiempos_respuesta = df_describe1.loc[["count"]]
+    array_count = np.array(count_tiempos_respuesta)
+    float_count = float(array_count[0][0])
+    lista_count_tiempos_respuesta.append(float_count)
+
+    #tiempos en cola
+    my_array2 = np.array(list(set(call_center.lista_tiempos_en_cola)))
+    df2 = pd.DataFrame(my_array2, columns = ['Tiempos en Cola'])
+    df_describe2 = df2.describe()
+    #1 media
+    media_tiempos_cola = df_describe2.loc[["mean"]]
+    array_media = np.array(media_tiempos_cola)
+    float_media = float(array_media[0][0])
+    lista_media_tiempos_cola.append(float_media)
+    #2 maximo
+    maximo_tiempos_cola = df_describe2.loc[["max"]]
+    array_maximo = np.array(maximo_tiempos_cola)
+    float_maximo = float(array_maximo[0][0])
+    lista_maximo_tiempos_cola.append(float_maximo)
+    #3 desv. estandar
+    desviacion_estandar_tiempos_cola = df_describe2.loc[["std"]]
+    array_desviacion = np.array(desviacion_estandar_tiempos_cola)
+    float_desviacion = float(array_desviacion[0][0])
+    lista_desviacion_estandar_tiempos_cola.append(float_desviacion)
+    #4 mediana
+    mediana_tiempos_cola = df_describe2.loc[["25%"]]
+    array_mediana = np.array(mediana_tiempos_cola)
+    float_mediana = float(array_mediana[0][0])
+    lista_mediana_tiempos_cola.append(float_mediana)
+    #5 tercer cuartil
+    tercer_cuartil_tiempos_cola = df_describe2.loc[["75%"]]
+    array_tercer_cuartil = np.array(tercer_cuartil_tiempos_cola)
+    float_tercer_cuartil = float(array_tercer_cuartil[0][0])
+    lista_tercer_cuartil_tiempos_respuesta.append(float_tercer_cuartil)
+    #6 count
+    count_tiempos_cola = df_describe2.loc[["count"]]
+    array_count = np.array(count_tiempos_cola)
+    float_count = float(array_count[0][0])
+    lista_count_tiempos_cola.append(float_count)
+
+
+
+    print("Días simulados: ",call_center.contador_dias)
+    print(f"Tiempo Actual Evento Término: {call_center.tiempo_actual}")
+    print("Lista Llegadas",len(call_center.lista_de_llegadas))
+    print("Lista Términos",len(call_center.lista_de_terminos))
+    print("Lista Colas",len(call_center.lista_cola))
+    print("Lista manejados",len(call_center.lista_eventos_manejados))
+    print(f"El evento terminó, Tiempo Actual {call_center.tiempo_actual}")
+
+    for i in call_center.lista_bases_creadas:
+        print(f"{i}")
+        print(f"Nodo asociado: {i.nodo_asociado}")
+        print(f"Id base: {i.id}")
+        print(f"Coordenadas base:{i.posicion_x, i.posicion_y} ")
+        print(f"Lista de ambulancias de la base: {i.lista_ambulancias_base} ")
+        print("")
+    
+    lista_callcenter.append(call_center)
+
+
+plt.plot(lista_media_duraciones)
+plt.show() 
+plt.plot(lista_maximo_duraciones)
+plt.show() 
+plt.plot(lista_desviacion_estandar_duraciones)
+plt.show() 
+plt.plot(lista_mediana_duraciones)
+plt.show() 
+plt.plot(lista_tercer_cuartil_duraciones)
+plt.show() 
+plt.plot(lista_count_duraciones)
+plt.show() 
+
+
+
+
+
