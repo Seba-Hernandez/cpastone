@@ -11,7 +11,7 @@ import pandas as pd
 
 from numpy import printoptions
 import numpy as np
-from carga_datos import cargar_bases, cargar_centros, cargar_eventos, cargar_nodos
+from carga_datos import cargar_bases, cargar_centros, cargar_eventos, cargar_nodos, cargar_bases_de_solucion
 from random import choice, shuffle
 import networkx as nx
 import csv 
@@ -26,7 +26,7 @@ def tiempo_24_horas(tiempo):
     # print(formato_24_horas)
     return(formato_24_horas)
 
-PARAMETRO_UMBRAL = 1
+
 
 def manejo_tiempo(fecha):
     datemask = '%H:%M:%S'
@@ -154,6 +154,7 @@ class CallCenter:
         self.contador_ambulancia = 0
 
         self.lista_tiempos_en_cola = []
+        self.PARAMETRO_UMBRAL = 2
 
         # usamos datetime para manejar temporalidad
         tiempo = 0
@@ -184,27 +185,113 @@ class CallCenter:
 
 
     def cargar_lista_bases(self):
+
+        # #17 bases activadas: ['0', '3', '6', '12', '9', '5', '23', '25', '20', '8', '10', '13', '7', '1', '11', '18', '22'] con 7, 9 y 25 asignados a 2 clusters y el resto a 1 cluster, umbral = 1 hora
+        # self.PARAMETRO_UMBRAL = 1 
+        # lista_bases = cargar_bases()
+        # #lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
+        # j = 0
+        # i = 0
+        # for base in lista_bases:
+        #     Base_n = Base(base[0], base[1], i) 
+        #     i += 1
+        #     self.lista_bases_creadas.append(Base_n)
+        #     base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
+        #     base.activada = True
+        #     self.lista_ambulancias_creadas[j].base_asignada = base
+        #     j += 1
+        # for base in self.lista_bases_creadas:
+        #     base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
+
+
+        #20 bases activadas: ['0', '3', '6', '12', '9', '5', '23', '25', '20', '8', '10', '13', '7', '1', '11', '18', '22'] donde las bases 7, 9 y 25 tienen 2 ambulancias, umbral = 1 hora
+        # self.PARAMETRO_UMBRAL = 1 
+        # lista_bases = cargar_bases()
+        # lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
+        # j = 0
+        # i = 0
+        # for base in lista_bases:
+        #     Base_n = Base(base[0], base[1], i) 
+        #     i += 1
+        #     self.lista_bases_creadas.append(Base_n)
+        # #print(self.lista_bases_creadas)
+        # for id_base in lista_bases_solucion:
+        #     for base in self.lista_bases_creadas:
+        #         if int(id_base) == base.id:
+        #             base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
+        #             base.activada = True
+        #             self.lista_ambulancias_creadas[j].base_asignada = base
+        #             j += 1
+        # contador_bases_adicionales = 0
+        # for id_base in lista_bases_solucion:
+        #     for base in self.lista_bases_creadas:
+        #         if int(id_base) == base.id:
+        #             if int(id_base) == 7 or int(id_base) == 9 or int(id_base) == 25:
+        #                 base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j+contador_bases_adicionales])
+        #                 base.activada = True
+        #                 self.lista_ambulancias_creadas[j+contador_bases_adicionales].base_asignada = base
+        #                 contador_bases_adicionales += 1
+        # for base in self.lista_bases_creadas:
+        #     base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
+
+        # #20 bases activadas: ['0', '3', '6', '12', '9', '5', '23', '25', '20', '8', '10', '13', '7', '1', '11', '18', '22'] donde las bases 7, 9 y 25 tienen 2 ambulancias, umbral = 2 hora
+        # self.PARAMETRO_UMBRAL = 2 
+        # lista_bases = cargar_bases()
+        # lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
+        # j = 0
+        # i = 0
+        # for base in lista_bases:
+        #     Base_n = Base(base[0], base[1], i) 
+        #     i += 1
+        #     self.lista_bases_creadas.append(Base_n)
+        # #print(self.lista_bases_creadas)
+        # for id_base in lista_bases_solucion:
+        #     for base in self.lista_bases_creadas:
+        #         if int(id_base) == base.id:
+        #             base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
+        #             base.activada = True
+        #             self.lista_ambulancias_creadas[j].base_asignada = base
+        #             j += 1
+        # contador_bases_adicionales = 0
+        # for id_base in lista_bases_solucion:
+        #     for base in self.lista_bases_creadas:
+        #         if int(id_base) == base.id:
+        #             if int(id_base) == 7 or int(id_base) == 9 or int(id_base) == 25:
+        #                 base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j+contador_bases_adicionales])
+        #                 base.activada = True
+        #                 self.lista_ambulancias_creadas[j+contador_bases_adicionales].base_asignada = base
+        #                 contador_bases_adicionales += 1
+        # for base in self.lista_bases_creadas:
+        #     base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
+
+
+
+        #solución modelo
+        self.PARAMETRO_UMBRAL = 2
         lista_bases = cargar_bases()
-        i = 0
+        lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
         j = 0
-        # shuffle(lista_bases)
+        i = 0
+        dic_ambulancias_por_base = {2:1, 4:2, 9:2, 14:4, 15:1, 17:3, 19:2, 22:3, 25:2}
         for base in lista_bases:
-            Base_n = Base(base[0], base[1], i)
-            if j < 20:
-                Base_n.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
-                Base_n.activada = True
-                self.lista_ambulancias_creadas[j].base_asignada = Base_n
-                j += 1
-            else:
-                pass
-            self.lista_bases_creadas.append(Base_n)
+            Base_n = Base(base[0], base[1], i) 
             i += 1
-            
-            
+            self.lista_bases_creadas.append(Base_n)
+        #print(self.lista_bases_creadas)
+        for id_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
+            for base in self.lista_bases_creadas:
+                if int(id_base) == base.id:
+                    for k in range(0, cantidad_ambulancias):
+                        base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
+                        base.activada = True
+                        self.lista_ambulancias_creadas[j].base_asignada = base
+                        j += 1
         for base in self.lista_bases_creadas:
             base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
 
-            
+
+
+
     def cargar_lista_centros(self):
         lista_centros_salud = cargar_centros()
         j = 0
@@ -216,11 +303,11 @@ class CallCenter:
             centro.nodo_asociado = self.nodo_mas_cercano(centro.posicion_x, centro.posicion_y)
 
     def cargar_lista_ambulancias(self):
-            z = 0
-            while z != 20:
-                ambulancia = Ambulancia( z) #z = id
-                self.lista_ambulancias_creadas.append(ambulancia)
-                z += 1
+        z = 0
+        while z != 20:
+            ambulancia = Ambulancia(z) #z = id
+            self.lista_ambulancias_creadas.append(ambulancia)
+            z += 1
                     
 
     def cargar_lista_llegadas(self):
@@ -316,7 +403,7 @@ class CallCenter:
                 # print(id_nodo_base)
                 if datos_ruta[2] == id_nodo_base:
                     # print("Entró a las bases")
-                    if datos_ruta[0] < PARAMETRO_UMBRAL:
+                    if datos_ruta[0] < self.PARAMETRO_UMBRAL:
                         tiempo_base_evento = datos_ruta[0]
                         # print("Entró AL UMBRAAAAAAAAAL")
                         evento_cola.ambulancia = evento_lista.ambulancia
@@ -564,7 +651,7 @@ class CallCenter:
                                 info_ruta = lista_rutas_bases[contador]
                                 tiempo_base_evento = info_ruta[0]      
                                 
-                                if tiempo_base_evento > PARAMETRO_UMBRAL: #Umbral para que eliga ambulancia que se demora menos
+                                if tiempo_base_evento > self.PARAMETRO_UMBRAL: #Umbral para que eliga ambulancia que se demora menos
                                     pass
 
                                 else:

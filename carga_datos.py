@@ -1,4 +1,5 @@
 from os import path
+import csv
 
 
 def cargar_bases():
@@ -39,12 +40,31 @@ def cargar_eventos():
             fila = fila.strip().split(";")
             lista_eventos.append(fila)
             i += 1  # Después se borrarán estas líneas  #
-            if i == 2001: #Día 1: 79, D2 = 149, D3 = 239, D7 = 506, D15 = 1022, D31 = 2001
+            if i == 6000: #Día 1: 79, D2 = 149, D3 = 239, D7 = 506, D15 = 1022, D31 = 2001
                 break
             else:
                 continue 
 
     return lista_eventos
+
+def cargar_bases_de_solucion(nombre_archivo_solucion):
+    with open(nombre_archivo_solucion, newline='') as File:  
+        reader = csv.reader(File)
+        lista_id_clusters = []
+        lista_id_bases = []
+        contador = 0
+        for row in reader:
+            if contador > 0:
+   
+                id_cluster = row[0]
+                lista_id_clusters.append(id_cluster)
+                id_base = row[1]
+                lista_id_bases.append(id_base)
+            contador += 1
+
+    return list(set(lista_id_bases))
+
+
 
 # EVENTOS EN FORMATO HORA FLOAT CON SEPARACIÓN DE COMA (,)
 # def cargar_eventos():
