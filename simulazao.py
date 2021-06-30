@@ -266,28 +266,52 @@ class CallCenter:
 
 
 
-        #solución modelo
+        #solución modelo 1
+        # self.PARAMETRO_UMBRAL = 2
+        # lista_bases = cargar_bases()
+        # lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
+        # j = 0
+        # i = 0
+        # dic_ambulancias_por_base = {2:1, 4:2, 9:2, 14:4, 15:1, 17:3, 19:2, 22:3, 25:2}
+        # for base in lista_bases:
+        #     Base_n = Base(base[0], base[1], i) 
+        #     i += 1
+        #     self.lista_bases_creadas.append(Base_n)
+        # #print(self.lista_bases_creadas)
+        # for id_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
+        #     for base in self.lista_bases_creadas:
+        #         if int(id_base) == base.id:
+        #             for k in range(0, cantidad_ambulancias):
+        #                 base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
+        #                 base.activada = True
+        #                 self.lista_ambulancias_creadas[j].base_asignada = base
+        #                 j += 1
+        # for base in self.lista_bases_creadas:
+        #     base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
+
+
+        #solución modelo 2
         self.PARAMETRO_UMBRAL = 2
         lista_bases = cargar_bases()
         lista_bases_solucion = cargar_bases_de_solucion("solucion_base_clusters.csv")
         j = 0
         i = 0
-        dic_ambulancias_por_base = {2:1, 4:2, 9:2, 14:4, 15:1, 17:3, 19:2, 22:3, 25:2}
+        dic_ambulancias_por_base = {2824:1, 2465:2, 4423:2, 3412:4, 2004:1, 4065:3, 2151:2, 3183:3, 2421:2}
         for base in lista_bases:
             Base_n = Base(base[0], base[1], i) 
             i += 1
             self.lista_bases_creadas.append(Base_n)
+        for base in self.lista_bases_creadas:
+            base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
         #print(self.lista_bases_creadas)
-        for id_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
+        for id_nodo_asociado_a_base, cantidad_ambulancias in dic_ambulancias_por_base.items():
             for base in self.lista_bases_creadas:
-                if int(id_base) == base.id:
+                if int(id_nodo_asociado_a_base) == base.nodo_asociado:
                     for k in range(0, cantidad_ambulancias):
                         base.lista_ambulancias_base.append(self.lista_ambulancias_creadas[j])
                         base.activada = True
                         self.lista_ambulancias_creadas[j].base_asignada = base
                         j += 1
-        for base in self.lista_bases_creadas:
-            base.nodo_asociado = self.nodo_mas_cercano(base.posicion_x, base.posicion_y)
 
 
 
@@ -311,7 +335,7 @@ class CallCenter:
                     
 
     def cargar_lista_llegadas(self):
-        print("LISTA EVENTOS",self.lista_eventos[0])
+        #print("LISTA EVENTOS",self.lista_eventos[0])
         self.contador_dias = 0
         hora_primer_dia = float(0)
         for evento in self.lista_eventos:
@@ -1005,3 +1029,11 @@ tiempo_total = tiempo_total_preparacion + tiempo_total_atencion + tiempo_total_d
 #     # Actualizar medidas de desempeño
 
 ## DESPACHO DIJKSTRA_LLEGAR ATENCION DIJKSTRA_CENTRO DERIVACIÓN DIJKSTRA_BASE
+
+
+for i in call_center.lista_bases_creadas:
+    print(f"{i}")
+    print(f"Nodo asociado: {i.nodo_asociado}")
+    print(f"Coordenadas base:{i.posicion_x, i.posicion_y} ")
+    print(f"Lista de ambulancias de la base: {i.lista_ambulancias_base} ")
+    print("")
