@@ -1165,14 +1165,15 @@ lista_tercer_cuartil_tiempos_cola = []
 lista_count_tiempos_cola = []
 
 for simulacion in range(0,2):
-    string_ruta_csv_demanda_sintetica = generador_demanda_sintetica()
-    call_center = CallCenter(string_ruta_csv_demanda_sintetica)
+    # string_ruta_csv_demanda_sintetica = generador_demanda_sintetica()
+    call_center = CallCenter("demanda sintetica1.csv")
     call_center.run()
 
     #duraciones
     my_array = np.array(call_center.lista_de_duraciones)
     df = pd.DataFrame(my_array, columns = ['Duraciones'])
     df_describe = df.describe()
+    print(df_describe)
     #1 media
     media_duraciones = df_describe.loc[["mean"]]
     array_media = np.array(media_duraciones)
@@ -1197,7 +1198,7 @@ for simulacion in range(0,2):
     tercer_cuartil_duraciones = df_describe.loc[["75%"]]
     array_tercer_cuartil = np.array(tercer_cuartil_duraciones)
     float_tercer_cuartil = float(array_tercer_cuartil[0][0])
-    lista_tercer_cuartil_tiempos_respuesta.append(float_tercer_cuartil)
+    lista_tercer_cuartil_duraciones.append(float_tercer_cuartil)
     #6 count
     count_duraciones = df_describe.loc[["count"]]
     array_count = np.array(count_duraciones)
@@ -1208,6 +1209,7 @@ for simulacion in range(0,2):
     my_array1 = np.array(call_center.lista_de_tiempos_respuesta)
     df1 = pd.DataFrame(my_array1, columns = ['Tiempo de Respuesta'])
     df_describe1 = df1.describe()    
+    print(df_describe1)
     #1 media
     media_tiempos_respuesta = df_describe1.loc[["mean"]]
     array_media = np.array(media_tiempos_respuesta)
@@ -1243,6 +1245,7 @@ for simulacion in range(0,2):
     my_array2 = np.array(list(set(call_center.lista_tiempos_en_cola)))
     df2 = pd.DataFrame(my_array2, columns = ['Tiempos en Cola'])
     df_describe2 = df2.describe()
+    print(df_describe2)
     #1 media
     media_tiempos_cola = df_describe2.loc[["mean"]]
     array_media = np.array(media_tiempos_cola)
@@ -1267,7 +1270,7 @@ for simulacion in range(0,2):
     tercer_cuartil_tiempos_cola = df_describe2.loc[["75%"]]
     array_tercer_cuartil = np.array(tercer_cuartil_tiempos_cola)
     float_tercer_cuartil = float(array_tercer_cuartil[0][0])
-    lista_tercer_cuartil_tiempos_respuesta.append(float_tercer_cuartil)
+    lista_tercer_cuartil_tiempos_cola.append(float_tercer_cuartil)
     #6 count
     count_tiempos_cola = df_describe2.loc[["count"]]
     array_count = np.array(count_tiempos_cola)
@@ -1284,6 +1287,7 @@ for simulacion in range(0,2):
     print("Lista manejados",len(call_center.lista_eventos_manejados))
     print(f"El evento terminó, Tiempo Actual {call_center.tiempo_actual}")
 
+
     for i in call_center.lista_bases_creadas:
         print(f"{i}")
         print(f"Nodo asociado: {i.nodo_asociado}")
@@ -1293,14 +1297,21 @@ for simulacion in range(0,2):
         print("")
     
     lista_callcenter.append(call_center)
+    call_center = CallCenter("demanda sintetica2.csv")
 
+print(len(lista_media_duraciones))
+print(len(lista_maximo_duraciones))
+print(len(lista_desviacion_estandar_duraciones))
+print(len(lista_mediana_duraciones))
+print(len(lista_tercer_cuartil_duraciones))
+print(len(lista_count_duraciones))
 
 plt.plot(lista_media_duraciones)
 plt.show() 
 plt.plot(lista_maximo_duraciones)
 plt.show() 
 plt.plot(lista_desviacion_estandar_duraciones)
-plt.show() 
+plt.show() pad
 plt.plot(lista_mediana_duraciones)
 plt.show() 
 plt.plot(lista_tercer_cuartil_duraciones)
